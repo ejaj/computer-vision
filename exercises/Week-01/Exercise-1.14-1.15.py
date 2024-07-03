@@ -27,10 +27,21 @@ def project_points(K, R, t, Q):
     return projected_points
 
 
-# Define camera matrix K, rotation matrix R, and translation vector t
+# Define the rotation angle
+theta = np.radians(30)  # Convert degrees to radians
+
+# Define the rotation matrix R for a 30-degree rotation around the y-axis
+R = np.array([
+    [np.cos(theta), 0, np.sin(theta)],
+    [0, 1, 0],
+    [-np.sin(theta), 0, np.cos(theta)]
+])
+
+# Define the translation vector t
+t = np.array([[0], [0], [4]])
+
+# Define the camera matrix K
 K = np.eye(3)  # Identity matrix for camera matrix K
-R = np.eye(3)  # Identity matrix for camera pose R
-t = np.array([[0], [0], [4]])  # Translation vector
 
 # Generate 3D points using the box3d function
 Q = box3d()
@@ -53,6 +64,44 @@ ax1.set_zlabel('Z')
 ax2 = fig.add_subplot(122)
 ax2.scatter(projected_points[0, :], projected_points[1, :], c='r', marker='o')
 ax2.set_title('2D Projected Points')
+ax2.set_xlabel('X')
+ax2.set_ylabel('Y')
+ax2.axis('equal')
+
+plt.show()
+
+# Experimenting with different R and t values for Exercise 1.15
+# Change these values and observe the effect
+
+# Example: Rotate around x-axis
+theta_x = np.radians(45)
+R_x = np.array([
+    [1, 0, 0],
+    [0, np.cos(theta_x), -np.sin(theta_x)],
+    [0, np.sin(theta_x), np.cos(theta_x)]
+])
+
+# Example: Different translation
+t_new = np.array([[1], [2], [4]])
+
+# Project with new R and t
+projected_points_new = project_points(K, R_x, t_new, Q)
+
+# Plotting the new projections
+fig = plt.figure(figsize=(12, 6))
+
+# Plot new 3D points
+ax1 = fig.add_subplot(121, projection='3d')
+ax1.scatter(Q[0, :], Q[1, :], Q[2, :], c='b', marker='o')
+ax1.set_title('3D Box Points (New R and t)')
+ax1.set_xlabel('X')
+ax1.set_ylabel('Y')
+ax1.set_zlabel('Z')
+
+# Plot new 2D projection
+ax2 = fig.add_subplot(122)
+ax2.scatter(projected_points_new[0, :], projected_points_new[1, :], c='r', marker='o')
+ax2.set_title('2D Projected Points (New R and t)')
 ax2.set_xlabel('X')
 ax2.set_ylabel('Y')
 ax2.axis('equal')

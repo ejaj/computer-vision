@@ -6,10 +6,10 @@ l = np.array([1, 2, -3])
 # Points given in homogeneous coordinates
 p1 = np.array([3, 0, 1])
 p2 = np.array([6, 0, 2])
-p3 = np.array([1, 1, 1])
-p4 = np.array([1, 1, 1])  # Note: p4 is given as the same as p3, this could be a typo in the exercise
-p5 = np.array([-40, 110, 10])
-p6 = np.array([1, 4, 1])
+p3 = np.array([1, 1, 2])
+p4 = np.array([1, 1, 1])
+p5 = np.array([110, -40, 10])
+p6 = np.array([11, 4, 1])
 
 # Calculate l^T * p for each point to check if they are on the line
 on_line_p1 = np.dot(l, p1)
