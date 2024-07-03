@@ -1,62 +1,80 @@
-import cv2
 import numpy as np
+import cv2
 
 
-def undistortImage(im, K, dist_coeffs):
-    # Create a meshgrid of pixel coordinates
+def undistortImage(im, K, distCoeffs):
+    # Generate a mesh grid for the image coordinates
     x, y = np.meshgrid(np.arange(im.shape[1]), np.arange(im.shape[0]))
-    # Stack and reshape to get homogeneous coordinates
     p = np.stack((x, y, np.ones(x.shape))).reshape(3, -1)
 
-    # Normalize the coordinates
+    # Compute the normalized coordinates
     K_inv = np.linalg.inv(K)
-    p_n = K_inv @ p
+    p_normalized = K_inv @ p
 
-    # Radial distortion correction
-    r = np.sqrt(p_n[0] ** 2 + p_n[1] ** 2)
-    r2 = r ** 2
-    r4 = r ** 2 * r2
-    r6 = r2 * r4
-    # Considering only k3, k5, and k7 terms as given
-    radial_distortion = 1 + dist_coeffs[0] * r2 + dist_coeffs[1] * r4 + dist_coeffs[2] * r6
-    p_n[0] *= radial_distortion
-    p_n[1] *= radial_distortion
+    # Compute radial distances squared
+    x_n = p_normalized[0, :]
+    y_n = p_normalized[1, :]
+    r2 = x_n ** 2 + y_n ** 2
 
-    # Re-project to pixel coordinates
-    p_d = K @ p_n
-    # Ensure the third coordinate is 1
-    p_d /= p_d[2]
+    # Compute the distortion
+    k1, k2, k3 = distCoeffs
+    radial_distortion = 1 + k1 * r2 + k2 * r2 ** 2 + k3 * r2 ** 3
 
-    # Extract x and y coordinates
+    # Apply the distortion to the normalized coordinates
+    x_distorted = x_n * radial_distortion
+    y_distorted = y_n * radial_distortion
+
+    # Convert distorted normalized coordinates back to pixel coordinates
+    p_d = np.vstack((x_distorted, y_distorted, np.ones_like(x_distorted)))
+    q = K @ p_d
+
+    # Normalize homogeneous coordinates
+    p_d = q / q[2]
+
+    # Reshape distorted coordinates back to the image shape
     x_d = p_d[0].reshape(x.shape).astype(np.float32)
     y_d = p_d[1].reshape(y.shape).astype(np.float32)
-    # Check that the third coordinate is 1
+
     assert (p_d[2] == 1).all(), 'You did a mistake somewhere'
 
-    # Remap the image to correct for distortion
+    # Undistort the image using the distorted coordinates
     im_undistorted = cv2.remap(im, x_d, y_d, cv2.INTER_LINEAR)
 
     return im_undistorted
 
 
-# Let's test the function with the provided image and calculated camera matrix
-# Reload the image
+# Load the image
 image_path = 'data/gopro_robot.jpg'
-im = cv2.imread(image_path)
+image = cv2.imread(image_path)
 
-# Camera matrix K has been calculated previously
+# Given parameters for the camera matrix and distortion coefficients
+focal_length_factor = 0.455732
+image_height, image_width = image.shape[:2]
+f = focal_length_factor * image_width
+
+# Principal point (center of the image)
+delta_x = image_width / 2
+delta_y = image_height / 2
+
+# Skew coefficients
+alpha = 0
+beta = 0
+
+# Distortion coefficients
+distCoeffs = [-0.245031, 0.071524, -0.00994978]
+
+# Intrinsic camera matrix K
 K = np.array([
-    [875.00544, 0, 960.0],
-    [0, 875.00544, 540.0],
+    [f, alpha, delta_x],
+    [0, f, delta_y],
     [0, 0, 1]
 ])
 
-# Distortion coefficients, considering only k3, k5, and k7 as given
-dist_coeffs = np.array([-0.245031, 0.071524, -0.00994978])
-
 # Undistort the image
-im_undistorted = undistortImage(im, K, dist_coeffs)
+im_undistorted = undistortImage(image, K, distCoeffs)
 
-# Save the undistorted image
-undistorted_image_path = 'data/gopro_robot_undistorted.jpg'
-cv2.imwrite(undistorted_image_path, im_undistorted)
+# Display the original and undistorted images
+cv2.imshow('Original Image', image)
+cv2.imshow('Undistorted Image', im_undistorted)
+cv2.waitKey(0)
+cv2.destroyAllWindows()

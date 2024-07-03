@@ -6,18 +6,33 @@ image_path = 'data/gopro_robot.jpg'
 image = cv2.imread(image_path)
 image_height, image_width, _ = image.shape
 
-focal_length_pixels = 0.455732 * image_width
-c_x = image_width / 2
-c_y = image_height / 2
+# Given parameters
+focal_length_factor = 0.455732
+f = focal_length_factor * image_width
 
-s = 0
+# Reasonable guess for principal point (center of the image)
+delta_x = image_width / 2
+delta_y = image_height / 2
 
-K = [
-    [focal_length_pixels, s, c_x],
-    [0, focal_length_pixels, c_y],
+# Skew coefficients
+alpha = 0  # Usually 0
+beta = 0  # Usually 0
+
+# Distortion coefficients
+k3 = -0.245031
+k5 = 0.071524
+k7 = -0.00994978
+
+distCoeffs = [k3, k5, k7]
+
+# Intrinsic camera matrix K
+K = np.array([
+    [f, alpha, delta_x],
+    [0, f, delta_y],
     [0, 0, 1]
-]
+])
 
-print("Intrinsic matrix K:")
+print("Intrinsic camera matrix K:")
 print(K)
-# dist_coeffs = np.array([0, 0, 0, 0, -0.245031, 0, 0, 0.071524, -0.00994978])
+print("Distortion coefficients:")
+print(distCoeffs)
